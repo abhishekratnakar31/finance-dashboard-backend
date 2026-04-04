@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import prisma  from "./utils/prisma.js";
 import jwt from "@fastify/jwt"
 import recordRoutes from "./routes/records.routes.js"
+import dashboardRoutes from "./routes/dashboard.routes.js"
 
 
 const fastify = Fastify({
@@ -17,6 +18,7 @@ async function start() {
   // Register routes
   await fastify.register(import("./routes/auth.routes.js"), { prefix: "/auth" });
   await fastify.register(recordRoutes)
+  await fastify.register(dashboardRoutes)
 
   fastify.get("/", async () => {
     return { message: "FDB api running" };
