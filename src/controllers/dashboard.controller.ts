@@ -2,18 +2,28 @@ import prisma from "../utils/prisma.js"
 import type { FastifyRequest, FastifyReply } from "fastify"
 
 export async function getSummary(req: FastifyRequest, reply: FastifyReply) {
+    const userId = (req.user as { id: string }).id
+
     const income = await prisma.financeRecord.aggregate({
         _sum: { amount: true },
-        where: { type: "INCOME" }
+        where: { 
+            type: "INCOME",
+            deletedAt: null,
+            createdBy: userId
+        }
     })
 
     const expense = await prisma.financeRecord.aggregate({
         _sum: { amount: true },
-        where: { type: "EXPENSE" }
+        where: { 
+            type: "EXPENSE",
+            deletedAt: null,
+            createdBy: userId
+        }
     })
 
-    const totalIncome = income._sum.amount || 0
-    const totalExpense = expense._sum.amount || 0
+    const totalIncome = income._sum?.amount || 0
+    const totalExpense = expense._sum?.amount || 0
 
     return reply.send({
         totalIncome,
@@ -23,16 +33,28 @@ export async function getSummary(req: FastifyRequest, reply: FastifyReply) {
 }
 
 export async function getCategorySummary(req: FastifyRequest, reply: FastifyReply) {
+    const userId = (req.user as { id: string }).id
+    
     const data = await prisma.financeRecord.groupBy({
         by: ["category"],
         _sum: { amount: true },
+        where: {
+            deletedAt: null,
+            createdBy: userId
+        }
     })
 
     return reply.send(data)
 }
 
 export async function getMonthlyTrends(req: FastifyRequest, reply: FastifyReply) {
+    const userId = (req.user as { id: string }).id
+
     const records = await prisma.financeRecord.findMany({
+        where: {
+            deletedAt: null,
+            createdBy: userId
+        },
         select: {
             amount: true,
             date: true,
@@ -52,7 +74,13 @@ export async function getMonthlyTrends(req: FastifyRequest, reply: FastifyReply)
 }
 
 export async function getRecentActivity(req: FastifyRequest, reply: FastifyReply) {
+    const userId = (req.user as { id: string }).id
+
     const records = await prisma.financeRecord.findMany({
+        where: {
+            deletedAt: null,
+            createdBy: userId
+        },
         take: 5,
         orderBy: {
             date: "desc"

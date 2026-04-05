@@ -34,6 +34,8 @@ model FinanceRecord {
  createdBy String
  user      User     @relation(fields: [createdBy], references: [id])
  createdAt DateTime @default(now())
+
+ deletedAt DateTime?
 }
 
 enum Role {
