@@ -1,6 +1,6 @@
 import prisma from "../utils/prisma.js"
 import type { FastifyRequest, FastifyReply } from "fastify"
-import { createRecordSchema } from "../utils/validation.js"
+import { createRecordSchema, updateRecordSchema } from "../utils/validation.js"
 
 export interface CreateRecordBody {
     amount: number
@@ -20,6 +20,14 @@ export interface UpdateRecordBody {
 
 export interface ParamsWithId {
     id: string
+}
+
+export interface GetRecordsQuery {
+    page?: number
+    limit?: number
+    type?: "INCOME" | "EXPENSE"
+    category?: string
+    search?: string
 }
 
 export async function createRecord(req: FastifyRequest<{ Body: CreateRecordBody }>, reply: FastifyReply) {
@@ -44,7 +52,7 @@ export async function createRecord(req: FastifyRequest<{ Body: CreateRecordBody 
                 type,
                 category,
                 date: new Date(date),
-                notes: notes || null,
+                notes: notes ?? null,
                 createdBy: userId
             }
         })
@@ -60,21 +68,21 @@ export async function createRecord(req: FastifyRequest<{ Body: CreateRecordBody 
         })
     }
 }
-   
 
-export async function getRecords(req: FastifyRequest, reply: FastifyReply) {
-    const { page = 1, limit = 10, type, category, search } = req.query as any
+export async function getRecords(req: FastifyRequest<{ Querystring: GetRecordsQuery }>, reply: FastifyReply) {
+    const { page = 1, limit = 10, type, category, search } = req.query
     const skip = (Number(page) - 1) * Number(limit)
 
     const userId = (req.user as { id: string }).id
     const where: any = { deletedAt: null, createdBy: userId }
+    
     if (category) where.category = category
     if (type) where.type = type
     if (search) {
-        where.notes = {
-            contains: search,
-            mode: 'insensitive'
-        }
+        where.OR = [
+            { category: { contains: search } },
+            { notes: { contains: search } }
+        ]
     }
 
     const records = await prisma.financeRecord.findMany({
@@ -89,29 +97,59 @@ export async function getRecords(req: FastifyRequest, reply: FastifyReply) {
     return reply.send(records)
 }
 
-
 export async function updateRecord(req: FastifyRequest<{ Params: ParamsWithId, Body: UpdateRecordBody }>, reply: FastifyReply) {
     const { id } = req.params
+    const parsed = updateRecordSchema.safeParse(req.body)
 
-    const updated = await prisma.financeRecord.update({
-        where: { id },
-        data: req.body
-    })
+    if (!parsed.success) {
+        return reply.status(400).send({
+            message: "Validation failed",
+            errors: parsed.error.issues
+        })
+    }
 
-    return reply.send(updated)
+    const { amount, type, category, date, notes } = parsed.data
+
+    const data: any = {}
+    if (amount !== undefined) data.amount = amount
+    if (type !== undefined) data.type = type
+    if (category !== undefined) data.category = category
+    if (date !== undefined) data.date = new Date(date)
+    if (notes !== undefined) data.notes = notes ?? null
+
+    try {
+        const updated = await prisma.financeRecord.update({
+            where: { id },
+            data
+        })
+
+        return reply.send(updated)
+    } catch (error: any) {
+        return reply.status(500).send({
+            message: "Failed to update record",
+            error: error.message
+        })
+    }
 }
 
 export async function deleteRecord(req: FastifyRequest<{ Params: ParamsWithId }>, reply: FastifyReply) {
     const { id } = req.params
 
-    await prisma.financeRecord.update({
-        where: { id },
-        data:{
-            deletedAt: new Date()
-        }
-    })
+    try {
+        await prisma.financeRecord.update({
+            where: { id },
+            data: {
+                deletedAt: new Date()
+            }
+        })
 
-    return reply.send({
-        message: "Record deleted"
-    })
+        return reply.send({
+            message: "Record deleted successfully"
+        })
+    } catch (error: any) {
+        return reply.status(500).send({
+            message: "Failed to delete record",
+            error: error.message
+        })
+    }
 }

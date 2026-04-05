@@ -5,6 +5,7 @@ import {
     deleteRecord,
     type CreateRecordBody,
     type UpdateRecordBody,
+    type GetRecordsQuery,
     type ParamsWithId
 } from "../controllers/record.controller.js"
 
@@ -42,7 +43,7 @@ export default async function recordRoutes(fastify: FastifyInstance) {
         }
     }, createRecord)
 
-    fastify.get("/records", {
+    fastify.get<{ Querystring: GetRecordsQuery }>("/records", {
         preHandler: authenticate,
         schema: {
             description: "Get all financial records for the authenticated user",
