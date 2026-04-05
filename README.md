@@ -35,18 +35,21 @@ A robust and scalable backend for a Finance Dashboard application, built with **
 ## ⚙️ Installation & Setup
 
 1. **Clone the repository:**
+
    ```bash
    git clone <repository-url>
    cd finance-dashboard
    ```
 
 2. **Install dependencies:**
+
    ```bash
    npm install
    ```
 
 3. **Environment Setup:**
    Create a `.env` file in the root directory and add your configurations:
+
    ```env
    DATABASE_URL="file:./prisma/dev.db"
    JWT_SECRET="your_secure_jwt_secret"
@@ -60,10 +63,18 @@ A robust and scalable backend for a Finance Dashboard application, built with **
    npx prisma migrate dev --name init
    ```
 
+5. **Database Studio (Optional):**
+   To visually explore and manage your database:
+   ```bash
+   npx prisma studio
+   ```
+
 ## 🏃 Running the Application
 
 ### Development Mode
+
 Runs the server with hot-reloading:
+
 ```bash
 npm run dev
 ```
@@ -71,7 +82,9 @@ npm run dev
 The server will be available at `http://localhost:3000`.
 
 ### Testing
+
 Run the test suite:
+
 ```bash
 npm run test
 ```
@@ -83,16 +96,16 @@ Once the server is running, you can access the interactive API documentation (Sw
 
 ### Core Endpoints
 
-| Category | Method | Endpoint | Description |
-| :--- | :--- | :--- | :--- |
-| **Auth** | POST | `/auth/register` | Register a new user |
-| **Auth** | POST | `/auth/login` | Login and receive JWT |
-| **Records** | GET | `/records` | List financial records (with filters) |
-| **Records** | POST | `/records` | Create a new financial record |
-| **Records** | PATCH | `/records/:id` | Update a record |
-| **Records** | DELETE | `/records/:id` | Soft delete a record |
-| **Dashboard** | GET | `/dashboard/summary` | Overall financial summary |
-| **Dashboard** | GET | `/dashboard/monthly-trends` | Monthly income/expense trends |
+| Category      | Method | Endpoint                    | Description                           |
+| :------------ | :----- | :-------------------------- | :------------------------------------ |
+| **Auth**      | POST   | `/auth/register`            | Register a new user                   |
+| **Auth**      | POST   | `/auth/login`               | Login and receive JWT                 |
+| **Records**   | GET    | `/records`                  | List financial records (with filters) |
+| **Records**   | POST   | `/records`                  | Create a new financial record         |
+| **Records**   | PATCH  | `/records/:id`              | Update a record                       |
+| **Records**   | DELETE | `/records/:id`              | Soft delete a record                  |
+| **Dashboard** | GET    | `/dashboard/summary`        | Overall financial summary             |
+| **Dashboard** | GET    | `/dashboard/monthly-trends` | Monthly income/expense trends         |
 
 ## 📂 Project Structure
 
