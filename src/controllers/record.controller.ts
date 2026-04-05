@@ -43,6 +43,11 @@ export async function createRecord(req: FastifyRequest<{ Body: CreateRecordBody 
     try {
         const { amount, type, category, date, notes } = parsed.data
         
+        const parsedDate = new Date(date)
+        if (isNaN(parsedDate.getTime())) {
+            return reply.status(400).send({ message: "Invalid date format" })
+        }
+
         // Check if user exists on request (added via JWT middleware)
         const userId = (req.user as { id: string }).id
 
@@ -51,7 +56,7 @@ export async function createRecord(req: FastifyRequest<{ Body: CreateRecordBody 
                 amount,
                 type,
                 category,
-                date: new Date(date),
+                date: parsedDate,
                 notes: notes ?? null,
                 createdBy: userId
             }
@@ -114,7 +119,13 @@ export async function updateRecord(req: FastifyRequest<{ Params: ParamsWithId, B
     if (amount !== undefined) data.amount = amount
     if (type !== undefined) data.type = type
     if (category !== undefined) data.category = category
-    if (date !== undefined) data.date = new Date(date)
+    if (date !== undefined) {
+        const parsedDate = new Date(date)
+        if (isNaN(parsedDate.getTime())) {
+            return reply.status(400).send({ message: "Invalid date format" })
+        }
+        data.date = parsedDate
+    }
     if (notes !== undefined) data.notes = notes ?? null
 
     try {
