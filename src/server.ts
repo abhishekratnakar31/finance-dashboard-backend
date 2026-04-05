@@ -1,9 +1,14 @@
+import "dotenv/config";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import prisma  from "./utils/prisma.js";
 import jwt from "@fastify/jwt"
+import authRoutes from "./routes/auth.routes.js"
 import recordRoutes from "./routes/records.routes.js"
 import dashboardRoutes from "./routes/dashboard.routes.js"
+
+import swagger from "@fastify/swagger"
+import swaggerUI from "@fastify/swagger-ui"
 
 
 const fastify = Fastify({
@@ -13,10 +18,38 @@ const fastify = Fastify({
 async function start() {
   await fastify.register(cors);
   await fastify.register(jwt,{
-    secret:"secret"
+    secret: process.env.JWT_SECRET || "supersecret"
   })
+
+await fastify.register(swagger, {
+    openapi: {
+        info: {
+            title: "Finance Dashboard Api",
+            description: "Backend API for managing financial records",
+            version: "1.0.0"
+        },
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT"
+                }
+            }
+        }
+    }
+})
+
+await fastify.register(swaggerUI, {
+  routePrefix:"/docs",
+  uiConfig:{
+    docExpansion:"list",
+    deepLinking: false
+  }
+})
+
   // Register routes
-  await fastify.register(import("./routes/auth.routes.js"), { prefix: "/auth" });
+  await fastify.register(authRoutes, { prefix: "/auth" });
   await fastify.register(recordRoutes)
   await fastify.register(dashboardRoutes)
 

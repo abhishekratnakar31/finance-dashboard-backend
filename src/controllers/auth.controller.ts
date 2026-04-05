@@ -3,21 +3,33 @@ import prisma from "../utils/prisma.js"
 import bcrypt from  "bcrypt"
 
 export async function registeruser(req: FastifyRequest, reply: FastifyReply) {
-    const {name, email, password, role} = req.body as any
-    const hashpassword= await bcrypt.hash(password, 10)
-    const user =await prisma.user.create({
-        data:{
+    const { name, email, password, role } = req.body as any
+
+    // Check if user already exists
+    const existingUser = await prisma.user.findUnique({
+        where: { email }
+    })
+
+    if (existingUser) {
+        return reply.status(409).send({ message: "Email already in use" })
+    }
+
+    const hashpassword = await bcrypt.hash(password, 10)
+    const user = await prisma.user.create({
+        data: {
             name,
             email,
-            password:hashpassword,
+            password: hashpassword,
             role
         }
     })
+
     return reply.send({
-        message:"user created",
+        message: "user created",
         user
     })
 }
+
 
 export async function loginuser(req: FastifyRequest, reply: FastifyReply){
     const {email, password} = req.body as any

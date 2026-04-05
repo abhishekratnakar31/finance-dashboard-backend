@@ -26,30 +26,41 @@ export async function createRecord(req: FastifyRequest<{ Body: CreateRecordBody 
     const parsed = createRecordSchema.safeParse(req.body)
 
     if (!parsed.success) {
-        return reply.status(400).send(parsed.error)
+        return reply.status(400).send({
+            message: "Validation failed",
+            errors: parsed.error.issues
+        })
     }
 
-    const { amount, type, category, date, notes } = parsed.data
-    
-    // Check if user exists on request (added via JWT middleware)
-    const userId = (req.user as { id: string }).id
+    try {
+        const { amount, type, category, date, notes } = parsed.data
+        
+        // Check if user exists on request (added via JWT middleware)
+        const userId = (req.user as { id: string }).id
 
-    const record = await prisma.financeRecord.create({
-        data: {
-            amount,
-            type,
-            category,
-            date: new Date(date),
-            notes: notes ?? null,
-            createdBy: userId
-        }
-    })
+        const record = await prisma.financeRecord.create({
+            data: {
+                amount,
+                type,
+                category,
+                date: new Date(date),
+                notes: notes || null,
+                createdBy: userId
+            }
+        })
 
-    return reply.send({
-        message: "Record created",
-        record
-    })
-}   
+        return reply.send({
+            message: "Record created successfully",
+            record
+        })
+    } catch (error: any) {
+        return reply.status(500).send({
+            message: "Failed to create record",
+            error: error.message
+        })
+    }
+}
+   
 
 export async function getRecords(req: FastifyRequest, reply: FastifyReply) {
     const { page = 1, limit = 10, type, category, search } = req.query as any
